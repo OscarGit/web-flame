@@ -8,9 +8,12 @@ let prevX = 0;
 let prevY = 0;
 let onCanvas = false;
 
-this.SPAWN_RATE = 2;
-
+let SPAWN_RATE = 2;
+let MAX_WIDTH = 1;
 let system;
+
+let loopTimer;
+let lastUpdate;
 
 window.onload = function() {
     container = document.getElementById('container');
@@ -24,6 +27,9 @@ window.onload = function() {
     canvas.addEventListener('mouseenter', enter);
     canvas.addEventListener('mouseleave', leave);
     windowResize();
+
+    loopTimer = setInterval(draw, 0);
+    lastUpdate = Date.now();
 };
 
 function windowResize() {
@@ -34,7 +40,6 @@ function move(e) {
     onCanvas = true;
     mouseX = e.x;
     mouseY = e.y;
-    if (!system.hasParticles()) window.requestAnimationFrame(draw);
 }
 function enter(e) {
     onCanvas = true;
@@ -50,6 +55,10 @@ function rgb(r, g, b) {
 }
 
 let draw = function() {
+    var now = Date.now();
+    var dt = now - lastUpdate;
+    lastUpdate = now;
+
     if (onCanvas) {
         let dX = mouseX - prevX;
         let dY = mouseY - prevY;
@@ -64,8 +73,7 @@ let draw = function() {
     }
     gc.fillStyle = rgb(48, 48, 48);
     gc.fillRect(0, 0, canvas.width, canvas.height);
-    system.draw();
-    if (system.hasParticles()) window.requestAnimationFrame(draw);
+    system.draw(dt);
 };
 
 class ParticleSystem {
@@ -77,7 +85,6 @@ class ParticleSystem {
         this.GRAVITY = 0.05;
 
         this.particles = [];
-        window.requestAnimationFrame(draw);
     }
 
     hasParticles() {
@@ -95,25 +102,26 @@ class ParticleSystem {
         });
     }
 
-    draw() {
+    draw(dt) {
         for (let i = 0; i < this.particles.length; i++) {
-            if (!this.updateParticle(this.particles[i])) {
+            if (!this.updateParticle(this.particles[i], dt)) {
                 this.particles.splice(i--, 1);
             }
         }
     }
 
-    updateParticle(p) {
-        gc.fillStyle = rgb(48 + p.t * (255 - 48), 48 + p.t * p.t * (200 - 48), 48);
+    updateParticle(p, dt) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy -= this.GRAVITY;
+        p.r += this.GROW_RADIUS * dt;
+        p.t -= this.dt;
+
+        gc.fillStyle = rgb(48 + p.t * 207, 48 + p.t * p.t * 152, 48);
         gc.beginPath();
         gc.ellipse(p.x, p.y, p.r, p.r, 0, 0, Math.PI * 2);
         gc.fill();
 
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy -= this.GRAVITY;
-        p.r += this.GROW_RADIUS;
-        p.t -= this.DT;
         return p.t > 0;
     }
 }
