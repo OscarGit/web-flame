@@ -34,7 +34,10 @@ window.onload = function() {
     canvas.addEventListener('mousemove', move);
     canvas.addEventListener('mouseenter', enter);
     canvas.addEventListener('mouseleave', leave);
+
     windowResize();
+    prevX = mouseX = canvas.width * 0.5;
+    prevY = mouseY = canvas.height * 0.5;
 
     loopTimer = setInterval(draw, 1000 / FPS);
     lastUpdate = Date.now();
